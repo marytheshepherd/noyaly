@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:noyaly/widgets/t_nav.dart';
+import '../widgets/b_nav.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      appBar: TopNav(leading: Icon(Icons.home_outlined)),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
@@ -177,11 +180,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
-            const Divider(thickness: 2),
           ],
         ),
       ),
+      bottomNavigationBar: SafeArea(child: BottomNav(currentRoute: "/home")),
     );
   }
 }

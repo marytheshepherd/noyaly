@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../widgets/b_nav.dart';
+import '../widgets/t_nav.dart';
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key});
@@ -6,10 +8,11 @@ class ReportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Report")),
+      appBar: TopNav(leading: Icon(Icons.read_more_outlined)),
       body: const Center(
         child: Text("Report Screen 👤", style: TextStyle(fontSize: 24)),
       ),
+      bottomNavigationBar: SafeArea(child: BottomNav(currentRoute: "/report")),
     );
   }
 }
