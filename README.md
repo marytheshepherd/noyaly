@@ -35,6 +35,14 @@ This project is built in fulfillment of the requirements for the module ET0529: 
 | **Database**    | Cloud Firestore
 | **Version Control** | Git & GitHub 
 
+#### libraries
+url_launcher: ^6.2.6 
+webview_flutter: ^4.10.0 (launch articles in-app for mobile)
+intl: ^0.19.0 (change integer months 1-12 to string months Jan-Dec)
+fl_chart: ^1.1.1 (make graph using stress history score)
+audioplayers: ^6.0.0
+
+
 ---
 
 ### 4. Getting Started

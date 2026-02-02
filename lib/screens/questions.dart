@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/question_bank.dart';
-import '../logic/logic.dart';
+import '../logic/scoring.dart';
 import '../widgets/mood.dart';
 
 class QuestionScreen extends StatefulWidget {
@@ -28,6 +28,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
     } else {
       final totalScore = answers.reduce((a, b) => a + b);
       debugPrint("Total PSS Score: $totalScore");
+      Navigator.pushReplacementNamed(context, '/report', arguments: totalScore);
     }
   }
 
