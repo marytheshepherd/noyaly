@@ -28,9 +28,9 @@ class MoodFace extends StatelessWidget {
     }
 
     return CircleAvatar(
-      radius: 55,
+      radius: 30,
       backgroundColor: color.withValues(alpha: 0.2),
-      child: Icon(icon, size: 70, color: color),
+      child: Icon(icon, size: 50, color: color),
     );
   }
 }

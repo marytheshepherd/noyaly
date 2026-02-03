@@ -50,7 +50,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
     final stressLabel = getStressLabel(score);
 
-    // Push score ONCE after navigation
+    // push score after navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (score > 0) {
         final today = DateTime.now().day;

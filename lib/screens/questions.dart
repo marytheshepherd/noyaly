@@ -11,41 +11,114 @@ class QuestionScreen extends StatefulWidget {
 }
 
 class _QuestionScreenState extends State<QuestionScreen> {
-  int currentIndex = 0;
-  double sliderValue = 2;
-  final List<int> answers = [];
+  int pageIndex = 0;
+  final int questionsPerPage = 2;
 
-  void nextQuestion() {
-    final question = questions[currentIndex];
+  late List<double> sliderValues;
 
-    answers.add(scoreFromIndex(sliderValue.round(), question.reverseScored));
+  @override
+  void initState() {
+    super.initState();
+    sliderValues = List.filled(questions.length, 2); // default: "Sometimes"
+  }
 
-    if (currentIndex < questions.length - 1) {
-      setState(() {
-        currentIndex++;
-        sliderValue = 2;
-      });
-    } else {
+  void nextPage() {
+    final bool isLastPage =
+        (pageIndex + 1) * questionsPerPage >= questions.length;
+
+    if (isLastPage) {
+      final answers = <int>[];
+
+      for (int i = 0; i < questions.length; i++) {
+        answers.add(
+          scoreFromIndex(sliderValues[i].round(), questions[i].reverseScored),
+        );
+      }
+
       final totalScore = answers.reduce((a, b) => a + b);
-      debugPrint("Total PSS Score: $totalScore");
+
       Navigator.pushReplacementNamed(context, '/report', arguments: totalScore);
+    } else {
+      setState(() {
+        pageIndex++;
+      });
     }
   }
 
-  void prevQuestion() {
-    if (currentIndex > 0) {
+  void prevPage() {
+    if (pageIndex > 0) {
       setState(() {
-        currentIndex--;
+        pageIndex--;
       });
     } else {
       Navigator.pushNamed(context, '/home');
     }
   }
 
+  Widget buildQuestionBlock(int index) {
+    final question = questions[index];
+
+    return Column(
+      children: [
+        Text(
+          question.text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, color: Colors.brown),
+        ),
+
+        const SizedBox(height: 20),
+
+        MoodFace(value: sliderValues[index]),
+
+        const SizedBox(height: 20),
+
+        Row(
+          children: [
+            const Text(
+              "Never",
+              style: TextStyle(fontSize: 12, color: Colors.brown),
+            ),
+
+            const SizedBox(width: 8),
+
+            Expanded(
+              child: Slider(
+                value: sliderValues[index], // or sliderValue if single
+                min: 0,
+                max: 4,
+                divisions: 4,
+                activeColor: const Color(0xFFFB923C),
+                inactiveColor: Colors.brown.shade100,
+                onChanged: (value) {
+                  setState(() {
+                    sliderValues[index] = value; // or sliderValue = value
+                  });
+                },
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            const Text(
+              "Very Often",
+              style: TextStyle(fontSize: 12, color: Colors.brown),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final question = questions[currentIndex];
     final size = MediaQuery.of(context).size;
+
+    final int firstIndex = pageIndex * questionsPerPage;
+    final int secondIndex = firstIndex + 1;
+    final bool hasSecondQuestion = secondIndex < questions.length;
+
+    final int totalPages = (questions.length / questionsPerPage).ceil();
+    final bool isLastPage = pageIndex == totalPages - 1;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F3EE),
@@ -58,7 +131,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: Center(
               child: Text(
-                "${currentIndex + 1} of ${questions.length}",
+                "${pageIndex + 1} of $totalPages",
                 style: const TextStyle(color: Colors.brown),
               ),
             ),
@@ -77,51 +150,28 @@ class _QuestionScreenState extends State<QuestionScreen> {
             ),
             child: Column(
               children: [
-                const SizedBox(height: 30),
-
                 const Text(
                   "In the last month, how often have you…",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.brown,
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-                Text(
-                  question.text,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.brown),
-                ),
+                // ===== First Question =====
+                buildQuestionBlock(firstIndex),
 
-                const SizedBox(height: 30),
-
-                MoodFace(value: sliderValue),
-
-                const SizedBox(height: 20),
-
-                Slider(
-                  value: sliderValue,
-                  min: 0,
-                  max: 4,
-                  divisions: 4,
-                  activeColor: const Color(0xFFFB923C),
-                  inactiveColor: Colors.brown.shade100,
-                  onChanged: (value) {
-                    setState(() => sliderValue = value);
-                  },
-                ),
-
-                const SizedBox(height: 10),
-
-                const Text(
-                  "Never      Rarely      Sometimes      Often      Very Often",
-                  style: TextStyle(fontSize: 12, color: Colors.brown),
-                  textAlign: TextAlign.center,
-                ),
+                // ===== Second Question (if exists) =====
+                if (hasSecondQuestion) ...[
+                  const SizedBox(height: 32),
+                  const Divider(thickness: 2),
+                  const SizedBox(height: 32),
+                  buildQuestionBlock(secondIndex),
+                ],
 
                 const Spacer(),
 
@@ -139,12 +189,13 @@ class _QuestionScreenState extends State<QuestionScreen> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        onPressed: prevQuestion,
+                        onPressed: prevPage,
                         child: const Text("Back"),
                       ),
                     ),
 
                     const SizedBox(width: 12),
+
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
@@ -155,10 +206,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        onPressed: nextQuestion,
-                        child: const Text(
-                          "Next",
-                          style: TextStyle(color: Colors.white),
+                        onPressed: nextPage,
+                        child: Text(
+                          isLastPage ? "Done" : "Next",
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                     ),

@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
                                   Text(
-                                    "How",
+                                    "how",
                                     style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.bold,
@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   Text(
-                                    "Are you?",
+                                    "are you?",
                                     style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.bold,
