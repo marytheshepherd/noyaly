@@ -1,6 +1,6 @@
 String getStressLabel(int score) {
-  if (score <= 20) return "Doing Great 🙂";
-  if (score <= 30) return "Borderline 😐";
-  if (score <= 40) return "Stressed 😟";
+  if (score <= 25) return "Doing Great 🙂";
+  if (score <= 50) return "Borderline 😐";
+  if (score <= 75) return "Stressed 😟";
   return "HELPPP 😵‍💫";
 }

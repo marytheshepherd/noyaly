@@ -3,6 +3,10 @@ import '../data/question_bank.dart';
 import '../logic/scoring.dart';
 import '../widgets/mood.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
 class QuestionScreen extends StatefulWidget {
   const QuestionScreen({super.key});
 
@@ -22,7 +26,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
     sliderValues = List.filled(questions.length, 2); // default: "Sometimes"
   }
 
-  void nextPage() {
+  void nextPage() async {
     final bool isLastPage =
         (pageIndex + 1) * questionsPerPage >= questions.length;
 
@@ -30,14 +34,27 @@ class _QuestionScreenState extends State<QuestionScreen> {
       final answers = <int>[];
 
       for (int i = 0; i < questions.length; i++) {
-        answers.add(
-          scoreFromIndex(sliderValues[i].round(), questions[i].reverseScored),
-        );
+        answers.add(scoreFromIndex(sliderValues[i].round()));
       }
 
       final totalScore = answers.reduce((a, b) => a + b);
+      final int finalScore = (((totalScore - 10) / 40) * 100).round();
 
-      Navigator.pushReplacementNamed(context, '/report', arguments: totalScore);
+      final user = FirebaseAuth.instance.currentUser!;
+      final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .collection("stress_entries")
+          .doc(todayKey)
+          .set({
+            "score": finalScore,
+            "date": todayKey,
+            "createdAt": Timestamp.now(),
+          });
+
+      Navigator.pushReplacementNamed(context, '/report');
     } else {
       setState(() {
         pageIndex++;
