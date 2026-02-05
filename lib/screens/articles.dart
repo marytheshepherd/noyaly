@@ -1,48 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../widgets/b_nav.dart';
 import '../widgets/t_nav.dart';
 
-import '../data/article_bank.dart';
 import '../model/articles.dart';
 import 'articles_web.dart';
 
 class ArticleScreen extends StatelessWidget {
   const ArticleScreen({super.key});
 
-  final List<Article> _articles = articlesData;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: false,
+      resizeToAvoidBottomInset: true,
       appBar: TopNav(leading: const Icon(Icons.book_outlined)),
       body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: _articles.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 14),
-          itemBuilder: (context, index) {
-            final article = _articles[index];
+        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance.collection('articles').snapshots(),
+          builder: (context, snapshot) {
+            final bottomInset = MediaQuery.of(context).padding.bottom;
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            return ArticleTile(
-              article: article,
-              onTap: () async {
-                if (kIsWeb) {
-                  final uri = Uri.parse(article.url);
-                  await launchUrl(uri, webOnlyWindowName: '_blank');
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ArticleWebViewPage(
-                        title: article.title,
-                        url: article.url,
-                      ),
-                    ),
-                  );
-                }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Center(child: Text("No articles found"));
+            }
+
+            final articles = snapshot.data!.docs
+                .map((doc) => Article.fromFirestore(doc))
+                .toList();
+
+            return ListView.separated(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                16 + kBottomNavigationBarHeight + bottomInset,
+              ),
+              itemCount: articles.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 14),
+              itemBuilder: (context, index) {
+                final article = articles[index];
+
+                return ArticleTile(
+                  article: article,
+                  onTap: () async {
+                    if (kIsWeb) {
+                      await launchUrl(
+                        Uri.parse(article.url),
+                        webOnlyWindowName: '_blank',
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ArticleWebViewPage(
+                            title: article.title,
+                            url: article.url,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                );
               },
             );
           },
@@ -101,7 +126,7 @@ class ArticleTile extends StatelessWidget {
                       child: const CircularProgressIndicator(strokeWidth: 2),
                     );
                   },
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: Colors.black.withValues(alpha: 0.06),
                     alignment: Alignment.center,
                     child: const Icon(Icons.broken_image_outlined),

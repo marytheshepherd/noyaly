@@ -50,6 +50,31 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _resetPassword(BuildContext context) async {
+    final email = idCtrl.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter your email first")),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password reset email sent! Check your inbox."),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Something went wrong")),
+      );
+    }
+  }
+
   @override
   void dispose() {
     idCtrl.dispose();
@@ -81,6 +106,20 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: true,
               decoration: const InputDecoration(labelText: "Password"),
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => _resetPassword(context),
+                child: const Text(
+                  "Forgot password?",
+                  style: TextStyle(
+                    color: Color(0xFF6B56A5), // match your purple
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+
             const SizedBox(height: 24),
 
             SizedBox(

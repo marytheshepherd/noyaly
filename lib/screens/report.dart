@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../widgets/b_nav.dart';
 import '../widgets/t_nav.dart';
 import '../logic/labels.dart';
+import 'report_label.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -65,8 +66,18 @@ class _ReportScreenState extends State<ReportScreen> {
               return FlSpot(day.toDouble(), score.toDouble());
             }).toList()..sort((a, b) => a.x.compareTo(b.x));
 
-            final int score = spots.isNotEmpty ? spots.last.y.toInt() : 0;
-            final stressLabel = getStressLabel(score);
+            final latestDoc = docs.isNotEmpty ? docs.last : null;
+            final int score = latestDoc != null
+                ? (latestDoc["score"] as num).toInt()
+                : 0;
+            final Map<String, dynamic>? latestData =
+                latestDoc?.data() as Map<String, dynamic>?;
+            final String? labelKey = latestData?["labelKey"] as String?;
+            final String? labelText = latestData?["labelText"] as String?;
+            final labelInfo = labelKey != null
+                ? getStressLabelInfo(labelKey)
+                : getStressLabelInfoFromScore(score);
+            final stressLabel = labelText ?? labelInfo.shortLabel;
 
             final daysInMonth = DateUtils.getDaysInMonth(
               _selectedMonth.year,
@@ -77,31 +88,41 @@ class _ReportScreenState extends State<ReportScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  //labelsf
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD9FFE6),
+                  Material(
+                    color: const Color(0xFFD9FFE6),
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          stressLabel,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                StressArticleScreen(info: labelInfo),
                           ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              stressLabel,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward),
+                          ],
                         ),
-                        const Icon(Icons.arrow_forward),
-                      ],
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: 16),
 
-                  //month
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -140,7 +161,6 @@ class _ReportScreenState extends State<ReportScreen> {
 
                   const SizedBox(height: 20),
 
-                  //chart
                   Container(
                     padding: const EdgeInsets.all(10),
                     child: SizedBox(
@@ -148,7 +168,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       child: spots.isEmpty
                           ? const Center(
                               child: Text(
-                                "No stress data for this month 🌱",
+                                "No stress data for this month",
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.brown,
@@ -165,7 +185,7 @@ class _ReportScreenState extends State<ReportScreen> {
                                 gridData: FlGridData(show: false),
                                 borderData: FlBorderData(
                                   show: true,
-                                  border: Border(
+                                  border: const Border(
                                     bottom: BorderSide(color: Colors.grey),
                                     left: BorderSide(color: Colors.grey),
                                     right: BorderSide.none,

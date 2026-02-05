@@ -24,7 +24,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
 
-    // 🔒 Always pre-filled from Firestore (non-null assumption)
     nameCtrl = TextEditingController(
       text: widget.data["displayName"] as String,
     );
@@ -50,13 +49,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final newEmail = emailCtrl.text.trim();
       final newPassword = passwordCtrl.text.trim();
 
-      // 1️⃣ Update name (Firestore)
       await FirebaseFirestore.instance
           .collection("users")
           .doc(widget.uid)
           .update({"displayName": newName});
 
-      // 2️⃣ Update email (Auth + Firestore)
       if (newEmail != user.email) {
         await user.verifyBeforeUpdateEmail(newEmail);
 
@@ -66,7 +63,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             .update({"email": newEmail});
       }
 
-      // 3️⃣ Update password (Auth only, if user typed one)
       if (newPassword.isNotEmpty) {
         await user.updatePassword(newPassword);
       }
@@ -93,19 +89,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _Field(
               label: "Name",
               controller: nameCtrl,
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? "Name is required" : null,
+              validator: (valid) => valid == null || valid.trim().isEmpty
+                  ? "Name is required"
+                  : null,
             ),
             const SizedBox(height: 12),
             _Field(
               label: "Email",
               controller: emailCtrl,
               keyboardType: TextInputType.emailAddress,
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
+              validator: (valid) {
+                if (valid == null || valid.trim().isEmpty) {
                   return "Email is required";
                 }
-                if (!v.contains("@")) {
+                if (!valid.contains("@")) {
                   return "Invalid email";
                 }
                 return null;
@@ -116,8 +113,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               label: "New password (optional)",
               controller: passwordCtrl,
               obscureText: true,
-              validator: (v) {
-                if (v != null && v.isNotEmpty && v.length < 6) {
+              validator: (valid) {
+                if (valid != null && valid.isNotEmpty && valid.length < 6) {
                   return "Password must be at least 6 characters";
                 }
                 return null;

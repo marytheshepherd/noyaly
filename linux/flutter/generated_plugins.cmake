@@ -3,7 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+<<<<<<< HEAD
+=======
   audioplayers_linux
+>>>>>>> dae95f1c8fa4f44c3b744b716246acb7aa82842e
   url_launcher_linux
 )
 

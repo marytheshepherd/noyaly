@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/question_bank.dart';
 import '../logic/scoring.dart';
+import '../logic/labels.dart';
 import '../widgets/mood.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,6 +42,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       final int finalScore = (((totalScore - 10) / 40) * 100).round();
 
       final user = FirebaseAuth.instance.currentUser!;
+      final labelInfo = getStressLabelInfoFromScore(finalScore);
       final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
       await FirebaseFirestore.instance
@@ -52,6 +54,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
             "score": finalScore,
             "date": todayKey,
             "createdAt": Timestamp.now(),
+            "labelKey": labelInfo.key,
+            "labelText": labelInfo.shortLabel,
+            "labelSummary": labelInfo.summary,
           });
 
       Navigator.pushReplacementNamed(context, '/report');

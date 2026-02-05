@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:noyaly/widgets/t_nav.dart';
 import '../widgets/b_nav.dart';
+import '../logic/streak.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,6 +14,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   @override
+  void initState() {
+    super.initState();
+    updateUserStreak();
+  }
+
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
@@ -149,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Text(
                             "Streaks:",
                             style: TextStyle(
@@ -159,14 +167,36 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           SizedBox(width: 6),
-                          Text(
-                            "6",
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.brown,
-                            ),
+                          StreamBuilder<DocumentSnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return const Text(
+                                  "0",
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.brown,
+                                  ),
+                                );
+                              }
+
+                              final streak = snapshot.data!['streak'] ?? 0;
+
+                              return Text(
+                                streak.toString(),
+                                style: const TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.brown,
+                                ),
+                              );
+                            },
                           ),
+
                           SizedBox(width: 4),
                           Icon(
                             Icons.local_fire_department,

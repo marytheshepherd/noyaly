@@ -15,8 +15,9 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     MaterialApp(
-      home: const AuthGate(),
+      initialRoute: '/',
       routes: {
+        '/': (_) => const AuthGate(),
         '/home': (_) => const HomeScreen(),
         '/articles': (_) => const ArticleScreen(),
         '/report': (_) => const ReportScreen(),

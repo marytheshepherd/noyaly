@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'edit_profile.dart';
 
@@ -84,7 +87,6 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ================= PROFILE INFO =================
               _SettingsCard(
                 background: const Color(0xFFE6FFD9),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 18),
@@ -105,7 +107,6 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              // ================= NOTIFICATIONS =================
               _SettingsCard(
                 background: const Color(0xFFE6FFD9),
                 trailing: Switch(
@@ -121,9 +122,10 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
 
+              const SizedBox(height: 14),
+              const _AddressMapSection(),
               const SizedBox(height: 22),
 
-              // ================= LOGOUT =================
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF6B8B3),
@@ -132,9 +134,14 @@ class ProfileScreen extends StatelessWidget {
                 child: TextButton(
                   onPressed: () async {
                     await FirebaseAuth.instance.signOut();
+                    if (!context.mounted) return;
+
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/', (route) => false);
                   },
                   child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 18),
+                    padding: EdgeInsets.symmetric(vertical: 10),
                     child: Text(
                       "Log out",
                       style: TextStyle(
@@ -154,7 +161,7 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-/* ================= REUSABLE WIDGETS ================= */
+/* REUSABLE WIDGETS */
 
 class _SettingsCard extends StatelessWidget {
   final Widget child;
@@ -204,6 +211,171 @@ class _InfoRow extends StatelessWidget {
     return Text(
       "$label: $value",
       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+    );
+  }
+}
+
+class _AddressMapSection extends StatefulWidget {
+  const _AddressMapSection();
+
+  @override
+  State<_AddressMapSection> createState() => _AddressMapSectionState();
+}
+
+class _AddressMapSectionState extends State<_AddressMapSection> {
+  static const String _apiKey = String.fromEnvironment(
+    "GOOGLE_MAPS_API_KEY",
+    defaultValue: "YOUR_KEY",
+  );
+
+  final TextEditingController _addressController = TextEditingController();
+  GoogleMapController? _mapController;
+
+  bool _isLoading = false;
+
+  LatLng _userLatLng = const LatLng(0, 0);
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _showAddressOnMap() async {
+    final address = _addressController.text.trim();
+    if (address.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final coords = await _geocodeAddress(address);
+      if (coords == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      _userLatLng = coords;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(_userLatLng, 13),
+      );
+    } catch (e) {
+      debugPrint("Map lookup error: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<LatLng?> _geocodeAddress(String address) async {
+    final uri = Uri.https("maps.googleapis.com", "/maps/api/geocode/json", {
+      "address": address,
+      "key": _apiKey,
+    });
+
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw "Geocode HTTP ${res.statusCode}: ${res.body}";
+    }
+
+    final data = json.decode(res.body) as Map<String, dynamic>;
+    final status = (data["status"] ?? "").toString();
+    if (status != "OK") {
+      throw "Geocode status $status: ${res.body}";
+    }
+    final results = data["results"] as List<dynamic>;
+    if (results.isEmpty) return null;
+
+    final location = results.first["geometry"]["location"];
+    return LatLng(
+      (location["lat"] as num).toDouble(),
+      (location["lng"] as num).toDouble(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final markers = <Marker>{
+      Marker(
+        markerId: const MarkerId("user"),
+        position: _userLatLng,
+        infoWindow: const InfoWindow(title: "Your location"),
+      ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFBFEFFF),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Find Nearest Centre",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _addressController,
+            decoration: const InputDecoration(
+              labelText: "Your address",
+              border: OutlineInputBorder(),
+            ),
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => _showAddressOnMap(),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _showAddressOnMap,
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text("Show on map"),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: GoogleMap(
+                initialCameraPosition: const CameraPosition(
+                  target: LatLng(0, 0),
+                  zoom: 2,
+                ),
+                markers: markers,
+                onMapCreated: (controller) {
+                  _mapController = controller;
+                },
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
