@@ -20,31 +20,30 @@ class StressLabelInfo {
   // 👇 ADD THESE BELOW THE CONSTRUCTOR
 
   Map<String, dynamic> toMap() => {
-        "key": key,
-        "shortLabel": shortLabel,
-        "title": title,
-        "summary": summary,
-        "whyDescription": whyDescription,
-        "gentleTips": gentleTips,
-        "imageAsset": imageAsset,
-      };
+    "key": key,
+    "shortLabel": shortLabel,
+    "title": title,
+    "summary": summary,
+    "whyDescription": whyDescription,
+    "gentleTips": gentleTips,
+    "imageAsset": imageAsset,
+  };
 
-  static StressLabelInfo fromMap(Map<String, dynamic> data) =>
-      StressLabelInfo(
-        key: data["key"] ?? "",
-        shortLabel: data["shortLabel"] ?? "",
-        title: data["title"] ?? "",
-        summary: data["summary"] ?? "",
-        whyDescription: data["whyDescription"] ?? "",
-        gentleTips: List<String>.from(data["gentleTips"] ?? const []),
-        imageAsset: data["imageAsset"] ?? _defaultImage,
-      );
+  static StressLabelInfo fromMap(Map<String, dynamic> data) => StressLabelInfo(
+    key: data["key"] ?? "",
+    shortLabel: data["shortLabel"] ?? "",
+    title: data["title"] ?? "",
+    summary: data["summary"] ?? "",
+    whyDescription: data["whyDescription"] ?? "",
+    gentleTips: List<String>.from(data["gentleTips"] ?? const []),
+    imageAsset: data["imageAsset"] ?? _defaultImage,
+  );
 }
-
 
 const _defaultImage = "assets/logo/eye.png";
 
-const Map<String, StressLabelInfo> stressLabels = { //map dictionary key value pair that stores the dtat
+const Map<String, StressLabelInfo> stressLabels = {
+  //map dictionary key value pair that stores the dtat
   "doing_great": StressLabelInfo(
     key: "doing_great",
     shortLabel: "Doing Great",
