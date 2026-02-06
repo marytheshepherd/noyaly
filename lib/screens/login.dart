@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final idCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
   bool loading = false;
+  bool obscurePassword = true;
 
   Future<void> _login() async {
     setState(() => loading = true);
@@ -53,9 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _resetPassword(BuildContext context) async {
     final email = idCtrl.text.trim();
 
-    if (email.isEmpty) {
+    if (email.isEmpty || !email.contains("@")) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter your email first")),
+        const SnackBar(content: Text("Please enter a valid email address")),
       );
       return;
     }
@@ -85,63 +86,121 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 60),
-            const Text(
-              "Welcome back",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
+      backgroundColor: const Color(0xFFFFF9F9),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 80),
 
-            TextField(
-              controller: idCtrl,
-              decoration: const InputDecoration(labelText: "Email or User ID"),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: passwordCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Password"),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => _resetPassword(context),
-                child: const Text(
-                  "Forgot password?",
-                  style: TextStyle(
-                    color: Color(0xFF6B56A5), // match your purple
-                    fontWeight: FontWeight.w600,
+              const Text(
+                "Welcome to Noyaly",
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+              ),
+
+              const SizedBox(height: 36),
+
+              TextField(
+                controller: idCtrl,
+                decoration: InputDecoration(
+                  labelText: "Email or User ID",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: loading ? null : _login,
-                child: loading
-                    ? const CircularProgressIndicator(strokeWidth: 2)
-                    : const Text("Log in"),
+              TextField(
+                controller: passwordCtrl,
+                obscureText: obscurePassword,
+                decoration: InputDecoration(
+                  labelText: "Password",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        obscurePassword = !obscurePassword;
+                      });
+                    },
+                  ),
+                ),
               ),
-            ),
 
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                );
-              },
-              child: const Text("Register"),
-            ),
-          ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => _resetPassword(context),
+                  child: const Text(
+                    "Forgot password?",
+                    style: TextStyle(
+                      color: Color(0xFF6B56A5),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton(
+                  onPressed: loading ? null : _login,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFA7D7B9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: loading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "Log in",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                    );
+                  },
+                  child: const Text(
+                    "Register",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
